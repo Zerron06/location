@@ -15,6 +15,7 @@ namespace location
 
         public static string serverResponse;
         public static string debugResponse;
+        [STAThread()]
         static public void Main(string[] args)
         {
             bool debug = false;
@@ -62,6 +63,9 @@ namespace location
                             case "-h1":
                                 protocol = args[i];
                                 break;
+                            case "whois":
+                                protocol = args[i];
+                                break;
                             case "-d":
                                 debug = true;
                                 break;
@@ -87,7 +91,9 @@ namespace location
                 }
 
                 if (username == null) { Console.WriteLine("ERROR: No username"); serverResponse = "No user name"; }
-                if (debug) { Console.WriteLine($"Debug:  {serverAddress}, {serverPort}, {protocol}, {username}, {location}"); }
+                if (debug) { Console.WriteLine($"Debug:  {serverAddress}, {serverPort}, {protocol}, {username}, {location}");
+                    debugResponse = $"Debug:  {serverAddress}, {serverPort}, {protocol}, {username}, {location}";
+                };
 
 
 
@@ -132,16 +138,16 @@ namespace location
                                 Console.WriteLine("<hr><center>nginx</center>");
                                 Console.WriteLine("</body>");
                                 Console.WriteLine("</html>");
-                                serverResponse = username + " is ";
-                                try
-                                {
-                                    int c;
-                                    while ((c = sr.Read()) > 0)
-                                    {
-                                        Console.WriteLine((char)c);
-                                    }
-                                }
-                                catch { }
+                                serverResponse = username + " is " + line;
+                                //try
+                                //{
+                                //    int c;
+                                //    while ((c = sr.Read()) > 0)
+                                //    {
+                                //        Console.WriteLine((char)c);
+                                //    }
+                                //}
+                                //catch { }
                                 
                             }
                         }
@@ -150,7 +156,7 @@ namespace location
                             sw.WriteLine($"GET /?name={username} HTTP/1.1\r\nHost: {serverAddress}\r\n");
                             sw.Flush();
                             string responses = sr.ReadToEnd();
-                            string[] sections = serverResponse.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+                            string[] sections = responses.Split(new string[] { "\r\n" }, StringSplitOptions.None);
                             location = sections[3];
 
                             if(responses == "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n")
@@ -168,16 +174,16 @@ namespace location
                         else
                         {
                             string combineString = $"name={username}&location={location}";
-                            int contentLength = combineString.Length + serverAddress.Length + 41;
-                            sw.WriteLine($"POST / HTTP/1.1\r\nHost: {serverAddress}\r\nContent-Length: {combineString.Length}\r\n\r\n" + combineString);
+                            int contentLength = combineString.Length;
+                            sw.WriteLine($"POST / HTTP/1.1\r\nHost: {serverAddress}\r\nContent-Length: {contentLength}\r\n\r\n" + combineString);
                             sw.Flush();
                             string responses = sr.ReadToEnd();
-                            string[] sections = serverResponse.Split(new char[] { ' ' }, 3);
+                            string[] sections = responses.Split(new char[] { ' ' }, 3);
                             responses = sections[2];
                             if (responses == sections[2])
                             {
                                 Console.WriteLine(username + " location changed to be " + location);
-                                serverResponse = username + " location changed to be" + location;
+                                serverResponse = username + " location changed to be " + location;
                             }
                             else
                             {
@@ -213,7 +219,7 @@ namespace location
 
                             sw.WriteLine($"POST /{username} HTTP/1.0\r\nContent-Length: {location.Length}\r\n\r\n{location}");
                             sw.Flush();
-                            string responses = sr.ReadLine();
+                            string responses = sr.ReadLine().Trim();
                             string[] sections = responses.Split(new char[] { ' ' }, 3);
                             responses = sections[2];
 
@@ -259,15 +265,15 @@ namespace location
                             string responses = sr.ReadLine();
                             string[] sections = responses.Split(new char[] { ' ' }, 3);
                             responses = sections[2];
-                            if(serverResponse == sections[2])
+                            if(responses == sections[2])
                             {
                                 Console.WriteLine(username + " location changed to be " + location);
                                 serverResponse = username + " location changed to be " + location;
                             }
                             else
                             {
-                                Console.WriteLine(responses);
-                                serverResponse = responses;
+                                Console.WriteLine(responses + "hello");
+                                serverResponse = responses + "hello";
                             }
                         }
                         break;
@@ -317,8 +323,8 @@ namespace location
                             }
                             else
                             {
-                                Console.WriteLine(username + " is " + response);
-                                serverResponse = username + " is " + response;
+                                Console.WriteLine(username + " location changed to be " + location);
+                                serverResponse = username + " location changed to be " + location;
                             }
 
                         }
