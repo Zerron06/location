@@ -13,7 +13,7 @@ namespace location
     public class Whois
     {
 
-        public static string serverResponse;
+        public static string serverResponse; //serverResponse and debugResponse are fed to the UI
         public static string debugResponse;
         [STAThread()]
         static public void Main(string[] args)
@@ -37,10 +37,10 @@ namespace location
 
                     for (int i = 0; i < args.Length; ++i)
                     {
-                        switch (args[i])
+                        switch (args[i]) //Goes through the arguments to find protocols, serverHost, serverPort, username and/or location
                         {
                             case "-h":
-                                try { serverAddress = args[++i]; }
+                                try { serverAddress = args[++i]; } //Checks if serverHost is given
                                 catch
                                 {
                                     Console.WriteLine("ERROR: No server given");
@@ -48,7 +48,7 @@ namespace location
 
                                 break;
                             case "-p":
-                                try { serverPort = int.Parse(args[++i]); }
+                                try { serverPort = int.Parse(args[++i]); } //Checks if serverPort is given
                                 catch
                                 {
                                     Console.WriteLine("ERROR: No port given");
@@ -70,7 +70,7 @@ namespace location
                                 debug = true;
                                 break;
                             case "-t":
-                                try
+                                try //Checks if timeout is given
                                 {
                                     timeout = int.Parse(args[++i]);
                                 }
@@ -91,7 +91,7 @@ namespace location
                 }
 
                 if (username == null) { Console.WriteLine("ERROR: No username"); serverResponse = "No user name"; }
-                if (debug) { Console.WriteLine($"Debug:  {serverAddress}, {serverPort}, {protocol}, {username}, {location}");
+                if (debug) { Console.WriteLine($"Debug:  {serverAddress}, {serverPort}, {protocol}, {username}, {location}"); //Sends a debug response to the output
                     debugResponse = $"Debug:  {serverAddress}, {serverPort}, {protocol}, {username}, {location}";
                 };
 
@@ -106,14 +106,13 @@ namespace location
                 StreamReader sr = new StreamReader(client.GetStream());
                 client.SendTimeout = 1000;
                 client.ReceiveTimeout = 1000;
-                //string line1 = sr.ReadLine();
-                //while (line1 != "") line1 = sr.ReadLine();
                 string response;
-
+                //Switches between the protocols
                 switch (protocol)
                 {
                     case "-h1":
-                        if(location == null && serverPort==80)
+                        // HTTP 1.1 Look Up
+                        if (location == null && serverPort==80) 
                         {
                             sw.WriteLine($"GET / name ={username} HTTP/1.1\r\nHost: { serverAddress}\r\n");
                             sw.Flush();
@@ -139,15 +138,6 @@ namespace location
                                 Console.WriteLine("</body>");
                                 Console.WriteLine("</html>");
                                 serverResponse = username + " is " + line;
-                                //try
-                                //{
-                                //    int c;
-                                //    while ((c = sr.Read()) > 0)
-                                //    {
-                                //        Console.WriteLine((char)c);
-                                //    }
-                                //}
-                                //catch { }
                                 
                             }
                         }
@@ -171,6 +161,7 @@ namespace location
                                 serverResponse = username + " is " + location;
                             }
                         }
+                        //HTTP 1.1 update
                         else
                         {
                             string combineString = $"name={username}&location={location}";
@@ -192,8 +183,10 @@ namespace location
                             }
                         }
                         break;
+
                     case "-h0":
-                        if (location == null)
+                        //HTTP 1.0 Look Up
+                        if (location == null) 
                         {
                             sw.WriteLine($"GET /?{username} HTTP/1.0\r\n");
                             sw.Flush();
@@ -213,7 +206,7 @@ namespace location
                                 serverResponse = username + " is " + location;
                             }
                         }
-
+                        //HTTP 1.0 Update
                         else
                         {
 
@@ -237,7 +230,8 @@ namespace location
                         }
                         break;
                     case "-h9":
-                        if (location == null)
+                        //HTTP 0.9 Look Up
+                        if (location == null) 
                         {
                             sw.WriteLine("GET /" + username);
                             sw.Flush();
@@ -257,6 +251,7 @@ namespace location
                             }
 
                         }
+                        // HTTP 0.9 Update
                         else
                         {
                             sw.WriteLine("PUT /" + username + "\r\n\r\n" + location);
@@ -278,7 +273,8 @@ namespace location
                         }
                         break;
                     case "whois":
-                        if (location == null)
+                        //Whois Look Up
+                        if (location == null) 
                         {
                             sw.WriteLine(username);
                             sw.Flush();
@@ -305,7 +301,8 @@ namespace location
 
 
                         }
-                        else 
+                        // Whois Update
+                        else
                         {
                             sw.WriteLine(username + " " + location);
                             sw.Flush();
@@ -336,57 +333,6 @@ namespace location
 
                 }
                 client.Close();
-
-
-                //   if (args.Length == 1)
-                //   {
-                //       sw.WriteLine(args[0]);
-                //       sw.Flush();
-                //       response = sr.ReadToEnd();
-                //       try
-                //       {
-                //
-                //           if (response != null)
-                //           {
-                //               Console.WriteLine(args[0] + " is " + response);
-                //           }
-                //           else if (response.Substring(0, 6) == "ERROR")
-                //           {
-                //             Console.WriteLine(response);
-                //           }
-                //
-                //       }
-                //       catch (Exception e)
-                //       {
-                //           Console.WriteLine(args[0] + " is " + sr.ReadToEnd());
-                //       }
-                //
-                //
-                //   }
-                //   else if (args.Length == 2)
-                //   {
-                //       sw.WriteLine(args[0] + " " + args[1]);
-                //       sw.Flush();
-                //       response = sr.ReadToEnd();
-                //       
-                //           if (response == "OK\r\n")
-                //           {
-                //               Console.WriteLine(args[0] + " location changed to be " + args[1]);
-                //           }
-                //           else if (response.Substring(0, 6) == "ERROR")
-                //           {
-                //               Console.WriteLine(response);
-                //           }
-                //           else
-                //           {
-                //               Console.WriteLine(args[0] + " is " + response);
-                //           }
-                //       
-                //   }
-                //   else
-                //   {
-                //       Console.WriteLine("ERROR");
-                //   }
 
             }
             catch (Exception e)
